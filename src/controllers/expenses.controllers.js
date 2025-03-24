@@ -8,6 +8,8 @@ const getAllExpenses = async (req, res) => {
 
   if (expenses.length === 0) {
     res.status(200).send([]);
+
+    return;
   }
 
   if (userId) {
