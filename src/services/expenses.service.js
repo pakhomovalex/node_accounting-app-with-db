@@ -3,7 +3,7 @@ const { Expense } = require('../models/Expense.model.js');
 const getAllExpenses = async () => {
   const expenses = await Expense.findAll();
 
-  return expenses;
+  return expenses || [];
 };
 
 // const getId = () =>
@@ -15,7 +15,7 @@ const getOne = (id) => {
 
 const create = ({ userId, spentAt, title, amount, category, note }) => {
   return Expense.create({
-    userId,
+    userId: Number(userId),
     spentAt,
     title,
     amount,
@@ -52,6 +52,10 @@ const updateExpense = async (
       where: { id },
     },
   );
+
+  const updatedExpense = getOne(+id);
+
+  return updatedExpense;
 };
 
 module.exports = {

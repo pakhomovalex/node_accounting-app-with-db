@@ -23,8 +23,14 @@ const deleteUser = async (id) => {
   });
 };
 
-const updateUser = async ({ id, name }) => {
-  await User.update({ name }, { where: id });
+const updateUser = async (id, name) => {
+  const user = await getOne(+id);
+
+  await User.update({ name }, { where: { id: user.id } });
+
+  const updatedUser = await getOne(+id);
+
+  return updatedUser;
 };
 
 module.exports = {

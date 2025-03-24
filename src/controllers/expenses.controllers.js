@@ -6,19 +6,26 @@ const getAllExpenses = async (req, res) => {
 
   let expenses = await expensesService.getAllExpenses();
 
+  if (expenses.length === 0) {
+    res.status(200).send([]);
+  }
+
   if (userId) {
-    expenses = expenses.filter((e) => e.userId === userId);
+    expenses = expenses.filter((e) => e.userId === +userId);
   }
 
   if (categories) {
-    expenses = expenses.filter((e) => e.category === categories);
+    expenses = expenses.filter(
+      (e) => e.category.includes(categories.split(',')),
+      // eslint-disable-next-line function-paren-newline
+    );
   }
 
-  if (from) {
+  if (from && typeof from === 'string') {
     expenses = expenses.filter((e) => new Date(e.spentAt) >= new Date(from));
   }
 
-  if (to) {
+  if (to && typeof to === 'string') {
     expenses = expenses.filter((e) => new Date(e.spentAt) <= new Date(to));
   }
 
@@ -28,11 +35,7 @@ const getAllExpenses = async (req, res) => {
 const getOneExpense = async (req, res) => {
   const { id } = req.params;
 
-  if (!(await expensesService.getOne(+id))) {
-    res.status(404).send('Not found');
-  }
-
-  if (typeof +id !== 'number') {
+  if (isNaN(+id)) {
     res.status(400).send('Write correct data');
 
     return;
@@ -50,32 +53,21 @@ const getOneExpense = async (req, res) => {
 };
 
 const createExpense = async (req, res) => {
-  const { userId, spentAt, title, amount, category, note } = req.body;
+  try {
+    const body = req.body;
 
-  if (
-    isNaN(+userId) ||
-    typeof spentAt !== 'string' ||
-    typeof title !== 'string' ||
-    typeof amount !== 'number' ||
-    typeof category !== 'string' ||
-    typeof note !== 'string' ||
-    !(await usersService.getOne(+userId))
-  ) {
+    if (!(await usersService.getOne(+body.userId))) {
+      res.status(400).send('User not found');
+
+      return;
+    }
+
+    const expense = await expensesService.create(body);
+
+    res.status(201).send(expense);
+  } catch (error) {
     res.status(400).send('Write correct data');
-
-    return;
   }
-
-  const expense = await expensesService.create({
-    userId,
-    spentAt,
-    title,
-    amount,
-    category,
-    note,
-  });
-
-  res.status(201).send(expense);
 };
 
 const deleteExpense = async (req, res) => {
@@ -93,7 +85,7 @@ const deleteExpense = async (req, res) => {
 };
 
 const updateExpense = async (req, res) => {
-  const body = req.body;
+  const { userId, spentAt, title, amount, category, note } = req.body;
   const { id } = req.params;
 
   if ((await expensesService.getOne(+id)) === null) {
@@ -102,13 +94,21 @@ const updateExpense = async (req, res) => {
     return;
   }
 
-  if (Object.keys(body).length === 0) {
+  if (Object.keys(req.body).length === 0) {
     res.status(400).send('Write correct data');
 
     return;
   }
 
-  const updatedExpense = await expensesService.updateExpense(id, body);
+  const updatedExpense = await expensesService.updateExpense(
+    id,
+    userId,
+    spentAt,
+    title,
+    amount,
+    category,
+    note,
+  );
 
   res.status(200).send(updatedExpense);
 };

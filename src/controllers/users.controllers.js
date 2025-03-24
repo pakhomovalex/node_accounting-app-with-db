@@ -68,7 +68,7 @@ const updateUser = async (req, res) => {
     return;
   }
 
-  const updatedUser = await usersServiсe.updateUser({ id, name });
+  const updatedUser = await usersServiсe.updateUser(Number(id), name);
 
   res.status(200).send(updatedUser);
 };
